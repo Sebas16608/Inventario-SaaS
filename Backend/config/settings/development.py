@@ -27,10 +27,5 @@ CORS_ALLOWED_ORIGINS = [
 # Email Backend para desarrollo
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-# Herramientas de desarrollo
-INSTALLED_APPS += [
-    'django_extensions',
-]
-
 # Logging más verbose
 LOGGING['root']['level'] = 'DEBUG'
