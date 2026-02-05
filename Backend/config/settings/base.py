@@ -28,6 +28,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
+    'drf_spectacular',
+    'django_filters',
     
     # Local apps
     'accounts.apps.AccountsConfig',
@@ -110,9 +112,11 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
     'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
         'rest_framework.filters.SearchFilter',
         'rest_framework.filters.OrderingFilter',
     ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
 # JWT Configuration
@@ -128,6 +132,35 @@ SIMPLE_JWT = {
 
 # CORS Configuration
 CORS_ALLOWED_ORIGINS = []
+
+# DRF Spectacular (Swagger)
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Inventario SaaS API',
+    'DESCRIPTION': 'API REST para gestión de inventario multi-tenant',
+    'VERSION': '1.0.0',
+    'SERVE_PERMISSIONS': ['rest_framework.permissions.IsAuthenticated'],
+    'SERVERS': [
+        {'url': 'http://localhost:8000', 'description': 'Local Development'},
+        {'url': 'https://api.ejemplo.com', 'description': 'Production'},
+    ],
+    'CONTACT': {
+        'name': 'Soporte Técnico',
+        'email': 'soporte@ejemplo.com',
+    },
+    'LICENSE': {
+        'name': 'MIT',
+        'url': 'https://opensource.org/licenses/MIT',
+    },
+    'SCHEMA_PATH_PREFIX': '/api/',
+    'AUTHENTICATION_FLOWS': {
+        'bearer': {
+            'type': 'http',
+            'scheme': 'bearer',
+            'bearerFormat': 'JWT',
+        }
+    },
+    'SCHEMA_MOUNT_PATH': '/api/schema/',
+}
 
 # Logging
 LOGGING = {
