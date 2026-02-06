@@ -12,10 +12,8 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, Sp
 
 # Import ViewSets
 from accounts.views import (
-    CustomUserViewSet,
-    OrganizationViewSet,
-    RoleViewSet,
-    PermissionViewSet,
+    UserViewSet,
+    EmpresaViewSet,
 )
 from inventario.views import (
     CategoryViewSet,
@@ -27,10 +25,8 @@ from inventario.views import (
 router = DefaultRouter()
 
 # Accounts routes
-router.register(r'users', CustomUserViewSet, basename='user')
-router.register(r'organizations', OrganizationViewSet, basename='organization')
-router.register(r'roles', RoleViewSet, basename='role')
-router.register(r'permissions', PermissionViewSet, basename='permission')
+router.register(r'users', UserViewSet, basename='user')
+router.register(r'empresas', EmpresaViewSet, basename='empresa')
 
 # Inventario routes
 router.register(r'categories', CategoryViewSet, basename='category')

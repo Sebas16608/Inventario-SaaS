@@ -1,48 +1,32 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import CustomUser, Empresa, Role, Permission
+from .models import User, Empresa
 
 
 @admin.register(Empresa)
 class EmpresaAdmin(admin.ModelAdmin):
-    list_display = ['nombre', 'slug', 'nicho', 'is_active', 'created_at']
+    list_display = ['nombre', 'nicho', 'email', 'telefono', 'is_active', 'created_at']
     list_filter = ['is_active', 'nicho', 'created_at']
-    search_fields = ['nombre', 'slug']
-    prepopulated_fields = {'slug': ('nombre',)}
+    search_fields = ['nombre', 'email', 'telefono']
     readonly_fields = ['created_at', 'updated_at']
     fieldsets = (
-        ('Información Básica', {'fields': ('nombre', 'slug', 'nicho')}),
-        ('Descripción', {'fields': ('descripcion', 'logo')}),
+        ('Información Básica', {'fields': ('nombre', 'nicho')}),
+        ('Contacto', {'fields': ('email', 'telefono', 'direccion')}),
         ('Estado', {'fields': ('is_active',)}),
         ('Fechas', {'fields': ('created_at', 'updated_at'), 'classes': ('collapse',)}),
     )
 
 
-@admin.register(Permission)
-class PermissionAdmin(admin.ModelAdmin):
-    list_display = ['code', 'description']
-    search_fields = ['code', 'description']
-
-
-@admin.register(Role)
-class RoleAdmin(admin.ModelAdmin):
-    list_display = ['nombre', 'empresa', 'created_at']
-    list_filter = ['empresa', 'nombre']
-    search_fields = ['nombre', 'empresa__nombre']
-    filter_horizontal = ['permissions']
-    readonly_fields = ['created_at']
-
-
-@admin.register(CustomUser)
-class CustomUserAdmin(BaseUserAdmin):
-    list_display = ['email', 'first_name', 'last_name', 'empresa', 'role', 'is_active']
-    list_filter = ['is_active', 'empresa', 'role', 'created_at']
+@admin.register(User)
+class UserAdmin(BaseUserAdmin):
+    list_display = ['email', 'first_name', 'last_name', 'empresa', 'is_active']
+    list_filter = ['is_active', 'empresa', 'created_at']
     search_fields = ['email', 'first_name', 'last_name']
     
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
-        ('Información Personal', {'fields': ('first_name', 'last_name')}),
-        ('Empresa', {'fields': ('empresa', 'role')}),
+        ('Información Personal', {'fields': ('first_name', 'last_name', 'telefono')}),
+        ('Empresa', {'fields': ('empresa',)}),
         ('Permisos', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
         ('Fechas Importantes', {'fields': ('last_login', 'created_at', 'updated_at')}),
     )
@@ -50,7 +34,7 @@ class CustomUserAdmin(BaseUserAdmin):
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('email', 'password1', 'password2'),
+            'fields': ('email', 'password1', 'password2', 'first_name', 'last_name', 'empresa'),
         }),
     )
     

@@ -227,7 +227,7 @@ SPECTACULAR_SETTINGS = {
 }
 
 # Custom User Model
-AUTH_USER_MODEL = 'accounts.CustomUser'
+AUTH_USER_MODEL = 'accounts.User'
 
 # CORS Configuration
 CORS_ALLOWED_ORIGINS = [
