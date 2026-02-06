@@ -31,24 +31,38 @@ python manage.py makemigrations
 python manage.py migrate
 ```
 
-## 4. Crear Permisos del Sistema
+## 4. Crear Superusuario
 
 ```bash
-python manage.py shell < docs/init_permissions.py
+python manage.py createsuperuser
 ```
 
-Esto creará 10 permisos predefinidos que se pueden asignar a roles.
+Ingresa un email y contraseña para el superusuario.
 
 ## 5. Crear Datos de Prueba (Opcional)
 
 ```bash
-python manage.py shell < docs/create_test_data.py
-```
+python manage.py shell << EOF
+from accounts.models import Empresa, User
 
-Esto creará:
-- 1 organización de prueba
-- 4 roles (admin, manager, staff, viewer)
-- 3 usuarios de prueba
+empresa = Empresa.objects.create(
+    nombre="Farmacia Central",
+    nicho="farmacia",
+    direccion="Calle Principal 123",
+    telefono="+34 912 345 678",
+    email="farmacia@example.com"
+)
+
+user = User.objects.create_user(
+    email="gerente@example.com",
+    username="gerente",
+    password="pass123",
+    first_name="Juan",
+    last_name="García",
+    empresa=empresa
+)
+EOF
+```
 
 ## 6. Ejecutar Servidor de Desarrollo
 
@@ -62,10 +76,7 @@ El servidor estará en: http://localhost:8000
 
 URL: http://localhost:8000/admin
 
-Usa las credenciales del superuser creado o los usuarios de prueba:
-- admin@test.com / admin123 (Admin de la organización)
-- manager@test.com / manager123 (Manager)
-- staff@test.com / staff123 (Staff)
+Usa las credenciales del superuser creado.
 
 ## 8. Probar Autenticación API
 
@@ -74,7 +85,7 @@ Usa las credenciales del superuser creado o los usuarios de prueba:
 ```bash
 curl -X POST http://localhost:8000/api/auth/token/ \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@test.com","password":"admin123"}'
+  -d '{"email":"admin@example.com","password":"tu-password"}'
 ```
 
 **Respuesta:**
@@ -98,23 +109,22 @@ curl -X GET http://localhost:8000/api/products/ \
 Backend/
 ├── config/
 │   ├── settings/
-│   │   ├── __init__.py      # Settings base
+│   │   ├── base.py          # Settings base
 │   │   ├── development.py   # Settings para desarrollo
 │   │   └── production.py    # Settings para producción
-│   ├── urls.py              # URLs principales (pendiente configuar)
+│   ├── urls.py              # URLs principales
 │   ├── wsgi.py              # WSGI application
 │   └── asgi.py              # ASGI application
-├── accounts/                # Gestión de usuarios
-│   ├── models.py            # User, Organization, Role
+├── accounts/                # Gestión de usuarios y empresas
+│   ├── models.py            # User, Empresa, CustomUserManager
 │   ├── serializers.py       # Serializers
-│   └── permissions.py       # Permisos custom
+│   ├── views.py             # ViewSets
+│   └── admin.py             # Admin site
 ├── inventario/              # Gestión de inventario
-│   ├── models/              # Category, Product, Stock, Movement
+│   ├── models/              # Category, Product, Movement, Stock
 │   ├── serializers/         # Serializers de inventario
-│   └── permissions.py       # Permisos de inventario
-├── utils/                   # Utilities
-│   ├── __init__.py          # TenantModel base
-│   └── mixins.py            # Mixins para multi-tenancy
+│   ├── views/               # ViewSets
+│   └── admin.py             # Admin site
 ├── manage.py
 ├── requirements.txt
 ├── .env.example
@@ -142,7 +152,7 @@ pip install djangorestframework
 ### Error: "AUTH_USER_MODEL"
 Asegúrate de tener en settings.py:
 ```python
-AUTH_USER_MODEL = 'accounts.CustomUser'
+AUTH_USER_MODEL = 'accounts.User'
 ```
 
 ### Error en migraciones

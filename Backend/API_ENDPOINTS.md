@@ -70,47 +70,28 @@ PUT    /api/users/{id}/               - Actualizar usuario
 PATCH  /api/users/{id}/               - Actualizar parcialmente
 DELETE /api/users/{id}/               - Eliminar usuario
 GET    /api/users/me/                 - Mi perfil actual
-POST   /api/users/{id}/change_password/ - Cambiar contraseña
-POST   /api/users/deactivate_account/ - Desactivar mi cuenta
+POST   /api/users/{id}/cambiar_contraseña/ - Cambiar contraseña
 ```
 
 **Filtros disponibles:**
-- `?organization=<id>` - Por organización
+- `?empresa=<id>` - Por empresa
 - `?email=<email>` - Por email
 - `?is_active=true|false` - Por estado activo
 - `?search=<texto>` - Buscar en email, nombre, apellido
-- `?ordering=email,-date_joined` - Ordenar resultados
+- `?ordering=email,-created_at` - Ordenar resultados
 
-### Organizaciones
-
-```
-GET    /api/organizations/            - Listar organizaciones
-POST   /api/organizations/            - Crear organización
-GET    /api/organizations/{id}/       - Detalles
-PUT    /api/organizations/{id}/       - Actualizar
-PATCH  /api/organizations/{id}/       - Actualizar parcialmente
-DELETE /api/organizations/{id}/       - Eliminar
-GET    /api/organizations/me/         - Mi organización
-POST   /api/organizations/{id}/deactivate/ - Desactivar
-POST   /api/organizations/{id}/activate/   - Activar
-```
-
-### Roles
+### Empresas
 
 ```
-GET    /api/roles/                    - Listar roles
-POST   /api/roles/                    - Crear rol
-GET    /api/roles/{id}/               - Detalles
-PUT    /api/roles/{id}/               - Actualizar
-PATCH  /api/roles/{id}/               - Actualizar parcialmente
-DELETE /api/roles/{id}/               - Eliminar rol
-```
-
-### Permisos
-
-```
-GET    /api/permissions/              - Listar todos los permisos
-GET    /api/permissions/{id}/         - Detalles del permiso
+GET    /api/empresas/                 - Listar empresas
+POST   /api/empresas/                 - Crear empresa
+GET    /api/empresas/{id}/            - Detalles
+PUT    /api/empresas/{id}/            - Actualizar
+PATCH  /api/empresas/{id}/            - Actualizar parcialmente
+DELETE /api/empresas/{id}/            - Eliminar
+GET    /api/empresas/me/              - Mi empresa
+POST   /api/empresas/{id}/desactivar/ - Desactivar
+POST   /api/empresas/{id}/activar/    - Activar
 ```
 
 ---
@@ -230,14 +211,13 @@ Authorization: Bearer <token>
 ## ✨ Características de la API
 
 ✅ **Autenticación JWT** - Tokens seguros con refresh automático  
-✅ **Multi-tenancy** - Datos aislados por organización  
+✅ **Multi-tenancy** - Datos aislados por empresa  
 ✅ **Filtros avanzados** - DjangoFilterBackend integrado  
 ✅ **Búsqueda completa** - En múltiples campos  
 ✅ **Paginación** - 20 items por página (configurable)  
 ✅ **Ordenamiento** - Ordenar por cualquier campo  
 ✅ **Documentación Swagger** - Interfaz interactiva  
 ✅ **ReDoc** - Documentación alternativa profesional  
-✅ **Permisos granulares** - Control de acceso por rol  
 ✅ **Auditoría** - Historial completo de movimientos  
 
 ---
@@ -248,7 +228,6 @@ Authorization: Bearer <token>
 - Refresh tokens (7 días)
 - CORS configurado
 - Multi-tenancy obligatorio
-- Control de acceso basado en roles (RBAC)
 - Tokens rotados automáticamente
 
 ---
@@ -276,11 +255,10 @@ Authorization: Bearer <token>
 
 ## 📝 Notas Importantes
 
-- La API filtra automáticamente por organización del usuario
+- La API filtra automáticamente por empresa del usuario
 - Los superusuarios ven todos los datos
-- Los usuarios normales solo ven datos de su organización
+- Los usuarios normales solo ven datos de su empresa
 - El stock se actualiza automáticamente con cada movimiento
-- Los campos `created_by` y `updated_by` se asignan automáticamente
 
 ---
 

@@ -12,14 +12,14 @@ Una plataforma profesional de gestión de inventario construida con Django REST 
 
 ## 🚀 Características Principales
 
-- **🏢 Multi-Tenancy**: Múltiples organizaciones en una sola aplicación
+- **🏢 Multi-Tenancy**: Múltiples empresas en una sola aplicación
 - **🔐 Autenticación JWT**: Token-based, segura y moderna
-- **👥 Control de Acceso**: Roles y permisos granulares
 - **📦 Gestión de Inventario**: Categorías, productos, stock y movimientos
 - **📊 Auditoría**: Registro de quién realiza cada acción
 - **🗄️ API RESTful**: Endpoints completos listos para consumir
 - **📝 Documentación Completa**: Código bien documentado
 - **⚡ Django ORM**: Base de datos flexible y potente
+- **✨ MVP Simplificado**: Modelo de autenticación limpio y eficiente
 
 ## 📁 Estructura del Proyecto
 
@@ -105,48 +105,54 @@ Admin en: **http://localhost:8000/admin**
 
 ## 📊 Modelos de Base de Datos
 
-### Organization (Tenant)
+### Empresa (Tenant)
 ```python
-- name: Nombre de la organización
-- slug: Identificador único
-- description: Descripción
-- logo: Imagen (opcional)
+- nombre: Nombre de la empresa
+- nicho: Tipo (farmacia, veterinaria)
+- direccion: Dirección física
+- telefono: Teléfono de contacto
+- email: Email de contacto
 - is_active: Estado
+- created_at/updated_at: Timestamps
 ```
 
-### CustomUser
+### User
 ```python
 - email: Email único
+- username: Nombre de usuario
 - first_name / last_name: Nombre completo
-- organization: ForeignKey(Organization)
-- role: ForeignKey(Role)
+- telefono: Teléfono personal
+- empresa: ForeignKey(Empresa)
 - is_active: Estado
+- created_at/updated_at: Timestamps
 ```
 
-### Role
+### Category
 ```python
-- name: admin, manager, staff, viewer
-- description: Descripción
-- permissions: ManyToMany(Permission)
+- nombre: Nombre de la categoría
+- descripcion: Descripción
+- is_active: Estado
 ```
 
 ### Product
 ```python
-- code: Código único
-- name: Nombre del producto
-- sku: SKU único
-- category: Categoría
-- price: Precio de venta
-- cost: Costo
+- codigo: Código único
+- nombre: Nombre del producto
+- descripcion: Descripción
+- categoria: ForeignKey(Category)
+- precio_venta: Precio de venta
+- precio_costo: Costo
+- is_active: Estado
 ```
 
-### Stock
+### Movement
 ```python
-- product: Producto
-- warehouse: Almacén/Ubicación
-- quantity: Cantidad disponible
-- minimum_quantity: Alerta de stock mínimo
-- maximum_quantity: Límite máximo
+- producto: ForeignKey(Product)
+- empresa: ForeignKey(Empresa)
+- tipo: Entrada/Salida
+- cantidad: Cantidad movida
+- razon: Motivo del movimiento
+- created_at: Fecha del movimiento
 ```
 
 ### Movement

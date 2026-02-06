@@ -4,27 +4,25 @@ Backend del sistema de gestión de inventario multi-tenant construido con Django
 
 ## Características
 
-- ✅ **Multi-Tenancy**: Soporte completo para múltiples organizaciones
+- ✅ **Multi-Tenancy**: Soporte completo para múltiples empresas
 - ✅ **Autenticación JWT**: Token-based authentication con refresh tokens
-- ✅ **Control de Acceso Granular**: Roles y permisos personalizables
 - ✅ **Gestión de Inventario**: Categorías, productos, stock y movimientos
 - ✅ **Auditoría**: Registro de quién realiza cada acción
 - ✅ **API RESTful**: Endpoints completamente documentados
+- ✅ **MVP Simplificado**: Arquitectura limpia sin complejidad innecesaria
 
 ## Estructura del Proyecto
 
 ```
 Backend/
-├── accounts/              # Gestión de usuarios y organizaciones
-│   ├── models.py         # User, Organization, Role, Permission
+├── accounts/              # Gestión de usuarios y empresas
+│   ├── models.py         # User, Empresa, CustomUserManager
 │   ├── serializers.py    # Serializers para API
-│   ├── permissions.py    # Permisos personalizados
 │   └── views.py          # ViewSets
 ├── inventario/           # Gestión de inventario
-│   ├── models/           # Category, Product, Stock, Movement
+│   ├── models/           # Category, Product, Movement, Stock
 │   ├── serializers/      # Serializers para cada modelo
-│   ├── permissions.py    # Permisos específicos de inventario
-│   └── views/            # ViewSets y views
+│   └── views/            # ViewSets
 ├── config/
 │   ├── settings/
 │   │   ├── base.py       # Configuración base
@@ -34,8 +32,7 @@ Backend/
 │   ├── wsgi.py
 │   └── asgi.py
 └── utils/                # Utilities comunes
-    ├── __init__.py       # TenantModel base
-    └── mixins.py         # Mixins para vistas
+    └── __init__.py
 ```
 
 ## Instalación
@@ -89,49 +86,41 @@ El servidor estará disponible en `http://localhost:8000`
 
 ## Modelos
 
-### Organization
+### Empresa
 Representa una empresa/cliente en el sistema SaaS.
 
 ```python
-- name: str
-- slug: str (único)
-- description: str
-- logo: ImageField
+- nombre: str
+- nicho: str (farmacia o veterinaria)
+- direccion: str
+- telefono: str
+- email: str
 - is_active: bool
 - created_at: datetime
 - updated_at: datetime
 ```
 
-### CustomUser
-Usuario del sistema vinculado a una organización.
+### User
+Usuario del sistema vinculado a una empresa.
 
 ```python
 - email: str (único)
-- organization: ForeignKey(Organization)
-- role: ForeignKey(Role)
+- username: str
 - first_name: str
 - last_name: str
+- telefono: str
+- empresa: ForeignKey(Empresa)
 - is_active: bool
 - created_at: datetime
-```
-
-### Role
-Rol dentro de una organización con permisos asociados.
-
-```python
-ROLES:
-- admin: Acceso total
-- manager: Gestión de inventario
-- staff: Personal de almacén
-- viewer: Solo lectura
+- updated_at: datetime
 ```
 
 ### Category
 Categoría de productos.
 
 ```python
-- name: str
-- description: str
+- nombre: str
+- descripcion: str
 - is_active: bool
 ```
 
@@ -139,13 +128,25 @@ Categoría de productos.
 Producto del inventario.
 
 ```python
-- code: str
-- name: str
-- sku: str (único)
-- category: ForeignKey(Category)
-- price: Decimal
-- cost: Decimal
+- codigo: str
+- nombre: str
+- descripcion: str
+- categoria: ForeignKey(Category)
+- precio_venta: Decimal
+- precio_costo: Decimal
 - is_active: bool
+```
+
+### Movement
+Movimiento de inventario (entrada/salida).
+
+```python
+- producto: ForeignKey(Product)
+- empresa: ForeignKey(Empresa)
+- tipo: str (ENTRADA/SALIDA)
+- cantidad: int
+- razon: str
+- created_at: datetime
 ```
 
 ### Stock
