@@ -20,7 +20,6 @@ from accounts.views import (
 from inventario.views import (
     CategoryViewSet,
     ProductViewSet,
-    StockViewSet,
     MovementViewSet,
 )
 
@@ -36,7 +35,6 @@ router.register(r'permissions', PermissionViewSet, basename='permission')
 # Inventario routes
 router.register(r'categories', CategoryViewSet, basename='category')
 router.register(r'products', ProductViewSet, basename='product')
-router.register(r'stock', StockViewSet, basename='stock')
 router.register(r'movements', MovementViewSet, basename='movement')
 
 urlpatterns = [

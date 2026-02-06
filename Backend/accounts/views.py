@@ -6,10 +6,10 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 
-from .models import CustomUser, Organization, Role, Permission
+from .models import CustomUser, Empresa, Role, Permission
 from .serializers import (
     CustomUserSerializer,
-    OrganizationSerializer,
+    EmpresaSerializer,
     RoleSerializer,
     PermissionSerializer,
     CustomUserDetailSerializer,
@@ -87,55 +87,55 @@ class CustomUserViewSet(viewsets.ModelViewSet):
 
 class OrganizationViewSet(viewsets.ModelViewSet):
     """
-    ViewSet para gestionar organizaciones (multi-tenancy).
+    ViewSet para gestionar empresas (multi-nicho).
     
     Endpoints disponibles:
-    - GET /api/organizations/ - Listar organizaciones
-    - POST /api/organizations/ - Crear organización
-    - GET /api/organizations/{id}/ - Detalles de la organización
-    - PUT /api/organizations/{id}/ - Actualizar organización
+    - GET /api/organizations/ - Listar empresas
+    - POST /api/organizations/ - Crear empresa
+    - GET /api/organizations/{id}/ - Detalles de la empresa
+    - PUT /api/organizations/{id}/ - Actualizar empresa
     - PATCH /api/organizations/{id}/ - Actualizar parcialmente
-    - DELETE /api/organizations/{id}/ - Eliminar organización
-    - GET /api/organizations/me/ - Mi organización
+    - DELETE /api/organizations/{id}/ - Eliminar empresa
+    - GET /api/organizations/me/ - Mi empresa
     """
-    queryset = Organization.objects.all()
-    serializer_class = OrganizationSerializer
+    queryset = Empresa.objects.all()
+    serializer_class = EmpresaSerializer
     permission_classes = [IsAuthenticated, IsManagerOrAdmin]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['is_active']
-    search_fields = ['name', 'email']
-    ordering_fields = ['name', 'created_at']
+    filterset_fields = ['is_active', 'nicho']
+    search_fields = ['nombre', 'slug']
+    ordering_fields = ['nombre', 'created_at']
     ordering = ['-created_at']
     
     def get_queryset(self):
         queryset = super().get_queryset()
         if self.request.user.is_authenticated and not self.request.user.is_superuser:
-            # Los usuarios normales solo ven su organización
-            queryset = queryset.filter(id=self.request.user.organization.id)
+            # Los usuarios normales solo ven su empresa
+            queryset = queryset.filter(id=self.request.user.empresa.id)
         return queryset
     
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def me(self, request):
-        """Obtener información de mi organización"""
-        org = request.user.organization
-        serializer = OrganizationSerializer(org)
+        """Obtener información de mi empresa"""
+        empresa = request.user.empresa
+        serializer = EmpresaSerializer(empresa)
         return Response(serializer.data)
     
     @action(detail=True, methods=['post'], permission_classes=[IsManagerOrAdmin])
     def deactivate(self, request, pk=None):
-        """Desactivar organización"""
-        org = self.get_object()
-        org.is_active = False
-        org.save()
-        return Response({'message': 'Organización desactivada'})
+        """Desactivar empresa"""
+        empresa = self.get_object()
+        empresa.is_active = False
+        empresa.save()
+        return Response({'message': 'Empresa desactivada'})
     
     @action(detail=True, methods=['post'], permission_classes=[IsManagerOrAdmin])
     def activate(self, request, pk=None):
-        """Activar organización"""
-        org = self.get_object()
-        org.is_active = True
-        org.save()
-        return Response({'message': 'Organización activada'})
+        """Activar empresa"""
+        empresa = self.get_object()
+        empresa.is_active = True
+        empresa.save()
+        return Response({'message': 'Empresa activada'})
 
 
 class RoleViewSet(viewsets.ModelViewSet):

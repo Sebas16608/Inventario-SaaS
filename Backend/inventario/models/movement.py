@@ -1,85 +1,128 @@
-from django.db import models
+from django.db import models, transaction
 from django.core.validators import MinValueValidator
-from utils import TenantModel
-from .stock import Stock
+from django.core.exceptions import ValidationError
+from django.conf import settings
+from django.utils import timezone
 
 
-class Movement(TenantModel):
-    """Movimiento de inventario (entrada/salida)"""
+class Movement(models.Model):
+    """Movimiento de inventario (ENTRADA / SALIDA).
+
+    Al guardarse, actualiza automáticamente `Product.cantidad`.
+    """
+    TIPO_ENTRADA = 'ENTRADA'
+    TIPO_SALIDA = 'SALIDA'
     MOVEMENT_TYPES = [
-        ('in', 'Entrada'),
-        ('out', 'Salida'),
-        ('adjustment', 'Ajuste'),
-        ('transfer', 'Transferencia'),
+        (TIPO_ENTRADA, 'Entrada'),
+        (TIPO_SALIDA, 'Salida'),
     ]
-    
-    MOVEMENT_STATUS = [
-        ('pending', 'Pendiente'),
-        ('completed', 'Completado'),
-        ('cancelled', 'Cancelado'),
-    ]
-    
+
+    empresa = models.ForeignKey(
+        'accounts.Empresa',
+        on_delete=models.PROTECT,
+        related_name='movements',
+        null=True,
+        blank=True,
+        verbose_name='Empresa',
+        help_text='Empresa responsable del movimiento'
+    )
     product = models.ForeignKey(
         'Product',
         on_delete=models.CASCADE,
-        related_name='movements'
+        related_name='movements',
+        verbose_name='Producto'
     )
-    movement_type = models.CharField(max_length=20, choices=MOVEMENT_TYPES)
-    quantity = models.IntegerField(validators=[MinValueValidator(1)])
-    warehouse = models.CharField(max_length=100, default='Principal')
-    reference = models.CharField(
+    movement_type = models.CharField(
+        max_length=20,
+        choices=MOVEMENT_TYPES,
+        verbose_name='Tipo de movimiento'
+    )
+    quantity = models.IntegerField(
+        validators=[MinValueValidator(1)],
+        verbose_name='Cantidad'
+    )
+    referencia = models.CharField(
         max_length=100,
         blank=True,
-        help_text='Número de referencia (factura, OC, etc)'
+        verbose_name='Referencia',
+        help_text='Número de factura, orden de compra u otra referencia'
     )
-    notes = models.TextField(blank=True)
-    status = models.CharField(
-        max_length=20,
-        choices=MOVEMENT_STATUS,
-        default='pending'
-    )
+    motivo = models.TextField(blank=True, verbose_name='Motivo')
+    notes = models.TextField(blank=True, verbose_name='Notas')
     created_by = models.ForeignKey(
-        'accounts.CustomUser',
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
-        related_name='movements_created'
+        related_name='movements_created',
+        verbose_name='Creado por'
     )
-    moved_at = models.DateTimeField(auto_now_add=True)
-    
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Creado el')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='Actualizado el')
+
     class Meta:
-        ordering = ['-moved_at']
-        verbose_name_plural = 'Movements'
-    
+        ordering = ['-created_at']
+        verbose_name = 'Movimiento'
+        verbose_name_plural = 'Movimientos'
+
     def __str__(self):
-        return f"{self.get_movement_type_display()} - {self.product.name} ({self.quantity})"
-    
+        return f"{self.get_movement_type_display()} - {self.product.nombre} ({self.quantity})"
+
+    def clean(self):
+        # Validaciones básicas
+        if self.product and self.empresa and hasattr(self.product, 'empresa'):
+            if self.product.empresa_id != self.empresa_id:
+                raise ValidationError('El producto debe pertenecer a la misma empresa')
+
     def save(self, *args, **kwargs):
-        # Asegurar que el producto pertenece a la misma organización
-        if self.product.organization != self.organization:
-            raise ValueError("El producto debe pertenecer a la misma organización")
-        super().save(*args, **kwargs)
-    
-    def complete(self):
-        """Completa el movimiento y actualiza el stock"""
-        if self.status != 'pending':
-            raise ValueError("Solo se pueden completar movimientos pendientes")
-        
-        stock, created = Stock.objects.get_or_create(
-            organization=self.organization,
-            product=self.product,
-            warehouse=self.warehouse,
-            defaults={'quantity': 0}
-        )
-        
-        if self.movement_type == 'in':
-            stock.quantity += self.quantity
-        elif self.movement_type == 'out':
-            if stock.quantity < self.quantity:
-                raise ValueError("Stock insuficiente")
-            stock.quantity -= self.quantity
-        elif self.movement_type == 'adjustment':
-            stock.quantity = self.quantity
-        
-        stock.save()
-        self.status = 'completed'
-        self.save(update_fields=['status'])
+        """Al guardar, aplicar cambio de stock en `Product.cantidad`.
+
+        - En creación: aplica directamente.
+        - En actualización: revierte el efecto anterior y aplica el nuevo.
+        Se asegura con `transaction.atomic` y `select_for_update` para evitar
+        condiciones de carrera.
+        """
+        self.full_clean()
+
+        with transaction.atomic():
+            product = self.product.__class__.objects.select_for_update().get(pk=self.product.pk)
+
+            if not self.pk:
+                # Creación
+                if self.movement_type == self.TIPO_SALIDA and self.quantity > product.cantidad:
+                    raise ValidationError('Stock insuficiente para realizar la salida')
+
+                if self.movement_type == self.TIPO_ENTRADA:
+                    product.cantidad = product.cantidad + self.quantity
+                else:
+                    product.cantidad = product.cantidad - self.quantity
+
+                if product.cantidad < 0:
+                    raise ValidationError('Resultado de stock inválido (negativo)')
+
+                product.save()
+                super().save(*args, **kwargs)
+                return
+
+            # Actualización de movimiento existente: revertir efecto previo y aplicar nuevo
+            prev = Movement.objects.select_for_update().get(pk=self.pk)
+
+            # Revertir efecto del previo
+            if prev.movement_type == self.TIPO_ENTRADA:
+                product.cantidad = product.cantidad - prev.quantity
+            else:
+                product.cantidad = product.cantidad + prev.quantity
+
+            # Aplicar nuevo efecto
+            if self.movement_type == self.TIPO_SALIDA and self.quantity > product.cantidad:
+                raise ValidationError('Stock insuficiente para la actualización del movimiento')
+
+            if self.movement_type == self.TIPO_ENTRADA:
+                product.cantidad = product.cantidad + self.quantity
+            else:
+                product.cantidad = product.cantidad - self.quantity
+
+            if product.cantidad < 0:
+                raise ValidationError('Resultado de stock inválido (negativo)')
+
+            product.save()
+            super().save(*args, **kwargs)

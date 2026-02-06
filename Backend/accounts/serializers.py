@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import Organization, Role, Permission
+from .models import Empresa, Role, Permission
 
 User = get_user_model()
 
@@ -16,24 +16,24 @@ class RoleSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Role
-        fields = ['id', 'name', 'description', 'permissions']
+        fields = ['id', 'nombre', 'descripcion', 'permissions']
 
 
-class OrganizationSerializer(serializers.ModelSerializer):
+class EmpresaSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Organization
-        fields = ['id', 'name', 'slug', 'description', 'logo', 'is_active', 'created_at']
+        model = Empresa
+        fields = ['id', 'nombre', 'slug', 'descripcion', 'logo', 'nicho', 'is_active', 'created_at']
         read_only_fields = ['created_at']
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
-    organization = OrganizationSerializer(read_only=True)
+    empresa = EmpresaSerializer(read_only=True)
     role = RoleSerializer(read_only=True)
     
     class Meta:
         model = User
         fields = [
-            'id', 'email', 'first_name', 'last_name', 'organization', 
+            'id', 'email', 'first_name', 'last_name', 'empresa', 
             'role', 'is_active', 'created_at'
         ]
         read_only_fields = ['created_at']

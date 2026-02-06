@@ -21,27 +21,33 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(email, password, **extra_fields)
 
 
-class Organization(models.Model):
-    """Modelo de Organización (Tenant)"""
-    name = models.CharField(max_length=255, unique=True)
-    slug = models.SlugField(unique=True)
-    description = models.TextField(blank=True)
-    logo = models.ImageField(upload_to='organizations/', null=True, blank=True)
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+class Empresa(models.Model):
+    """Modelo de Empresa (Tenant multi-nicho)"""
+    nombre = models.CharField(max_length=255, unique=True, verbose_name='Nombre')
+    slug = models.SlugField(unique=True, verbose_name='Slug')
+    descripcion = models.TextField(blank=True, verbose_name='Descripción')
+    logo = models.ImageField(upload_to='empresas/', null=True, blank=True, verbose_name='Logo')
+    nicho = models.CharField(
+        max_length=50,
+        choices=[('farmacia', 'Farmacia'), ('veterinaria', 'Veterinaria')],
+        verbose_name='Nicho',
+        help_text='Sector de negocio de la empresa'
+    )
+    is_active = models.BooleanField(default=True, verbose_name='Activo')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Creado el')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='Actualizado el')
     
     class Meta:
         ordering = ['-created_at']
-        verbose_name = _('Organización')
-        verbose_name_plural = _('Organizaciones')
+        verbose_name = 'Empresa'
+        verbose_name_plural = 'Empresas'
     
     def __str__(self):
-        return self.name
+        return self.nombre
 
 
 class Role(models.Model):
-    """Roles disponibles en la organización"""
+    """Roles disponibles en la empresa"""
     ROLE_CHOICES = [
         ('admin', _('Administrador')),
         ('manager', _('Gerente')),
@@ -49,27 +55,31 @@ class Role(models.Model):
         ('viewer', _('Visualizador')),
     ]
     
-    organization = models.ForeignKey(
-        Organization,
+    empresa = models.ForeignKey(
+        Empresa,
         on_delete=models.CASCADE,
-        related_name='roles'
+        related_name='roles',
+        null=True,
+        blank=True,
+        verbose_name='Empresa'
     )
-    name = models.CharField(max_length=50, choices=ROLE_CHOICES)
-    description = models.TextField(blank=True)
+    nombre = models.CharField(max_length=50, choices=ROLE_CHOICES, blank=True, verbose_name='Nombre')
+    descripcion = models.TextField(blank=True, verbose_name='Descripción')
     permissions = models.ManyToManyField(
         'Permission',
         blank=True,
-        related_name='roles'
+        related_name='roles',
+        verbose_name='Permisos'
     )
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Creado el')
     
     class Meta:
-        unique_together = ('organization', 'name')
-        verbose_name = _('Rol')
-        verbose_name_plural = _('Roles')
+        unique_together = ('empresa', 'nombre')
+        verbose_name = 'Rol'
+        verbose_name_plural = 'Roles'
     
     def __str__(self):
-        return f"{self.get_name_display()} - {self.organization.name}"
+        return f"{self.get_nombre_display()} - {self.empresa.nombre if self.empresa else 'Sin empresa'}"
 
 
 class Permission(models.Model):
@@ -99,25 +109,27 @@ class Permission(models.Model):
 
 
 class CustomUser(AbstractUser):
-    """User personalizado con relación a Organization"""
-    email = models.EmailField(unique=True)
-    organization = models.ForeignKey(
-        Organization,
+    """Usuario personalizado con relación a Empresa"""
+    email = models.EmailField(unique=True, verbose_name='Email')
+    empresa = models.ForeignKey(
+        Empresa,
         on_delete=models.CASCADE,
-        related_name='users',
+        related_name='usuarios',
         null=True,
-        blank=True
+        blank=True,
+        verbose_name='Empresa'
     )
     role = models.ForeignKey(
         Role,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='users'
+        related_name='usuarios',
+        verbose_name='Rol'
     )
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True, verbose_name='Activo')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Creado el')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='Actualizado el')
     
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
