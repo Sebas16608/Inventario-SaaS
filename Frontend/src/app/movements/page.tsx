@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 import { apiClient } from '@/services/api'
 import { Layout } from '@/components/Layout'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
+import { Plus } from 'lucide-react'
+import Link from 'next/link'
 
 interface Movement {
   id: number
@@ -41,9 +43,18 @@ export default function MovementsPage() {
       <Layout>
         <div>
           {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Movimientos de Inventario</h1>
-            <p className="text-gray-600 mt-2">Historial de entradas y salidas</p>
+          <div className="flex justify-between items-center mb-8">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Movimientos de Inventario</h1>
+              <p className="text-gray-600 mt-2">Historial de entradas y salidas</p>
+            </div>
+            <Link
+              href="/movements/new"
+              className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition"
+            >
+              <Plus size={20} />
+              Nuevo Movimiento
+            </Link>
           </div>
 
           {error && (

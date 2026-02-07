@@ -39,11 +39,15 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isLoading: true, error: null })
     try {
       const data = await apiClient.getToken(email, password)
+      console.log('Login successful:', { access: data.access ? 'present' : 'missing' })
+      
       localStorage.setItem('access_token', data.access)
       localStorage.setItem('refresh_token', data.refresh)
 
       // Obtener perfil del usuario
       const userProfile = await apiClient.getUserProfile()
+      console.log('User profile fetched:', userProfile)
+      
       set({
         token: data.access,
         refreshToken: data.refresh,
@@ -52,8 +56,9 @@ export const useAuthStore = create<AuthState>((set) => ({
         isLoading: false,
       })
     } catch (error: any) {
+      console.error('Login error:', error.response?.data || error.message)
       set({
-        error: error.response?.data?.detail || 'Error al iniciar sesión',
+        error: error.response?.data?.detail || error.message || 'Error al iniciar sesión',
         isLoading: false,
       })
       throw error
@@ -76,19 +81,26 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   checkAuth: async () => {
+    set({ isLoading: true })
     const token = localStorage.getItem('access_token')
     if (token) {
       try {
         set({ token, isAuthenticated: true })
         const userProfile = await apiClient.getUserProfile()
-        set({ user: userProfile })
-      } catch (error) {
+        set({ user: userProfile, isLoading: false })
+      } catch (error: any) {
+        console.error('Auth check failed:', error)
+        localStorage.removeItem('access_token')
+        localStorage.removeItem('refresh_token')
         set({
           user: null,
           token: null,
           isAuthenticated: false,
+          isLoading: false,
         })
       }
+    } else {
+      set({ isLoading: false })
     }
   },
 }))

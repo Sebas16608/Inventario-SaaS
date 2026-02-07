@@ -7,10 +7,11 @@ The `urlpatterns` list routes URLs to views. For more information please see:
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.views import TokenRefreshView
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 
-# Import ViewSets
+# Import custom auth view and ViewSets
+from accounts.authentication import CustomTokenObtainPairView
 from accounts.views import (
     UserViewSet,
     EmpresaViewSet,
@@ -37,8 +38,8 @@ urlpatterns = [
     # Admin
     path('admin/', admin.site.urls),
     
-    # API Authentication
-    path('api/auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    # API Authentication - Using custom view that accepts email instead of username
+    path('api/auth/token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     
     # API Endpoints
